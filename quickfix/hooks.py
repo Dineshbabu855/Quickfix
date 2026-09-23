@@ -9,6 +9,17 @@ app_license = "mit"
 # ------------------
 
 # required_apps = []
+permission_query_conditions = {
+    "Job Card": "quickfix.Permision.job_card_query"
+}
+doc_events = {
+    "*": {
+        "on_update": "quickfix.audit.log_change",
+        "on_submit": "quickfix.audit.log_change",
+        "on_cancel": "quickfix.audit.log_change",
+    }
+}
+after_install = "quickfix.setup.create"
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -86,7 +97,6 @@ app_license = "mit"
 # ------------
 
 # before_install = "quickfix.install.before_install"
-# after_install = "quickfix.install.after_install"
 
 # Uninstallation
 # ------------

@@ -1,27 +1,60 @@
-// Copyright (c) 2026, dinesh and contributors
-// For license information, please see license.txt
-function calculate_amount(frm,cdt,cdn){
-    let total_cost = 1;
-    let r =locals[cdt][cdn];
-    console.log(r, "toiuweoiu");
-    r.total_price= r.quantity*r.unit_price;
-    frm.refresh_field("parts_used");
-    (frm.doc.parts_used || []).forEach(r => {
-        total_cost += r.total_price;
-    });
-    frm.set_value("parts_total", total_cost);
-    console.log(total_cost,'kjhkjh')
-    console.log(frm.doc.labour_charge, "fkd;lgkdsf");
-    console.log(total_cost + frm.doc.labour_charge, "sample");
-    
-    
-    frm.set_value("final_amount", total_cost + frm.doc.labour_charge);
-}
 frappe.ui.form.on("Job Card", {
-	after_save(frm,cdt,cdn) {
-        console.log("poipo");
-        
-        calculate_amount(frm,cdt,cdn);
-
-	},
+    setup(frm) {
+        frm.set_query("assigned_technician", () => {
+            return {
+                filters: {
+                    status: "Active",
+                    specialization: frm.doc.device_type
+                }
+            };
+        });
+    },
+    refresh(frm) {
+        if (frm.doc.status === "Pending Diagnosis") {
+            frm.dashboard.add_indicator("Pending Diagnosis", "orange");
+        } else if (frm.doc.status === "In Repair") {
+            frm.dashboard.add_indicator("In Repair", "blue");
+        } else if (frm.doc.status === "Ready for Delivery") {
+            frm.dashboard.add_indicator("Ready for Delivery", "green");
+        } else if (frm.doc.status === "Delivered") {
+            frm.dashboard.add_indicator("Delivered", "green");
+        } else if (frm.doc.status === "Cancelled") {
+            frm.dashboard.add_indicator("Cancelled", "red");
+        }
+        if (frm.doc.status === "Ready for Delivery" && frm.doc.docstatus === 1) {
+            frm.add_custom_button("Mark as Delivered", () => {
+                frm.set_value("status", "Delivered");
+                frm.save();
+            });
+        }
+    },
+    assigned_technician(frm) {
+        if (!frm.doc.assigned_technician) {
+            return;
+        }
+        frappe.db.get_value(
+            "Technician",
+            frm.doc.assigned_technician,
+            "specialization"
+        ).then(r => {
+            if (
+                r.message &&
+                r.message.specialization &&
+                r.message.specialization !== frm.doc.device_type
+            ) {
+                frappe.msgprint("Technician specialization does not match the device type.");
+            }
+        });
+    }
+});
+frappe.ui.form.on("Part Usage Entry", {
+    quantity(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        frappe.model.set_value(
+            cdt,
+            cdn,
+            "total_price",
+            (row.quantity || 0) * (row.unit_price || 0)
+        );
+    }
 });

@@ -6,5 +6,4 @@ from frappe.model.document import Document
 
 
 class PartUsageEntry(Document):
-	def a(self):
-		self.total_cost = self.unit_price * self.quantity
+	pass
