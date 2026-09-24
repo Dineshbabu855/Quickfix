@@ -20,7 +20,11 @@ doc_events = {
     }
 }
 after_install = "quickfix.setup.create"
-
+scheduler_events = {
+    "All": [
+        "quickfix.api.low_stack"
+    ]
+}
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{

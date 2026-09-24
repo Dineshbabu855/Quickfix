@@ -10,10 +10,10 @@ def log_change(doc, method=None):
 		"on_update": "updated",
 		"on_submit": "submitted",
 		"on_cancel": "cancelled",
+		"low_stock_check":"low_stock_check",
 	}.get(method, method)
 	if not action:
 		return
-
 	frappe.get_doc(
 		{
 			"doctype": "Audit Log",

@@ -27,6 +27,68 @@ frappe.ui.form.on("Job Card", {
                 frm.save();
             });
         }
+        if (!frm.is_new() && frm.doc.status !== "Delivered" && frm.doc.status !== "Cancelled") {
+            frm.add_custom_button("Reject Job", () => {
+                let dialog = new frappe.ui.Dialog({
+                    title: "Reject Job",
+                    fields: [
+                        {
+                            fieldname: "reason",
+                            label: "Rejection Reason",
+                            fieldtype: "Small Text",
+                            reqd: 1
+                        }
+                    ],
+                    primary_action_label: "Reject",
+                    primary_action(values) {
+                        frm.set_value("status", "Cancelled");
+                        frm.set_value("remarks", values.reason);
+                        dialog.hide();
+                        frm.save();
+                    }
+                });
+
+                dialog.show();
+            });
+            frm.add_custom_button("Transfer Technician", () => {
+                frappe.prompt(
+                    [
+                        {
+                            fieldname: "technician",
+                            label: "Technician",
+                            fieldtype: "Link",
+                            options: "Technician",
+                            reqd: 1
+                        }
+                    ],
+                    values => {
+                        frappe.confirm(
+                            "Are you sure you want to transfer this Job Card?",
+                            () => {
+                                frappe.call({
+                                    method: "quickfix.api.transfer_job",
+                                    args: {
+                                        from_tech: frm.doc.assigned_technician,
+                                        to_tech: values.technician
+                                    },
+                                    callback() {
+                                        frm.set_value(
+                                            "assigned_technician",
+                                            values.technician
+                                        );
+
+                                        frm.trigger("assigned_technician");
+                                        frm.save();
+                                    }
+                                });
+                            }
+                        );
+                    },
+                    "Transfer Technician",
+                    "Transfer"
+                );
+            });
+        }
     },
     assigned_technician(frm) {
         if (!frm.doc.assigned_technician) {
@@ -42,7 +104,9 @@ frappe.ui.form.on("Job Card", {
                 r.message.specialization &&
                 r.message.specialization !== frm.doc.device_type
             ) {
-                frappe.msgprint("Technician specialization does not match the device type.");
+                frappe.msgprint(
+                    "Technician specialization does not match the device type."
+                );
             }
         });
     }
