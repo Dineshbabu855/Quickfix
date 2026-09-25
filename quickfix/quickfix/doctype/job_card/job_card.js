@@ -47,7 +47,6 @@ frappe.ui.form.on("Job Card", {
                         frm.save();
                     }
                 });
-
                 dialog.show();
             });
             frm.add_custom_button("Transfer Technician", () => {
@@ -62,9 +61,7 @@ frappe.ui.form.on("Job Card", {
                         }
                     ],
                     values => {
-                        frappe.confirm(
-                            "Are you sure you want to transfer this Job Card?",
-                            () => {
+                        frappe.confirm("Are you sure you want to transfer this Job Card?",() => {
                                 frappe.call({
                                     method: "quickfix.api.transfer_job",
                                     args: {
@@ -72,11 +69,7 @@ frappe.ui.form.on("Job Card", {
                                         to_tech: values.technician
                                     },
                                     callback() {
-                                        frm.set_value(
-                                            "assigned_technician",
-                                            values.technician
-                                        );
-
+                                        frm.set_value("assigned_technician",values.technician);
                                         frm.trigger("assigned_technician");
                                         frm.save();
                                     }
@@ -94,19 +87,9 @@ frappe.ui.form.on("Job Card", {
         if (!frm.doc.assigned_technician) {
             return;
         }
-        frappe.db.get_value(
-            "Technician",
-            frm.doc.assigned_technician,
-            "specialization"
-        ).then(r => {
-            if (
-                r.message &&
-                r.message.specialization &&
-                r.message.specialization !== frm.doc.device_type
-            ) {
-                frappe.msgprint(
-                    "Technician specialization does not match the device type."
-                );
+        frappe.db.get_value("Technician",frm.doc.assigned_technician,"specialization").then(r => {
+            if (r.message &&r.message.specialization &&r.message.specialization !== frm.doc.device_type) {
+                frappe.msgprint("Technician specialization does not match the device type.");
             }
         });
     }
@@ -114,11 +97,6 @@ frappe.ui.form.on("Job Card", {
 frappe.ui.form.on("Part Usage Entry", {
     quantity(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        frappe.model.set_value(
-            cdt,
-            cdn,
-            "total_price",
-            (row.quantity || 0) * (row.unit_price || 0)
-        );
+        frappe.model.set_value(cdt,cdn,"total_price",(row.quantity || 0) * (row.unit_price || 0));
     }
 });
