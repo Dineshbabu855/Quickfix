@@ -1,0 +1,41 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+      - name: Deploy via SSH
+        env:
+          HOST: ${{ secrets.STAGING_SSH_HOST }}
+          USER: ${{ secrets.STAGING_SSH_USER }}
+          PORT: ${{ secrets.STAGING_SSH_PORT }}
+          BENCH_PATH: ${{ secrets.STAGING_BENCH_PATH }}
+          SITE_NAME: ${{ secrets.STAGING_SITE_NAME }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -p "$PORT" "$USER@$HOST" "
+            set -e
+            cd $BENCH_PATH
+            bench --site $SITE_NAME pull
+            bench --site $SITE_NAME build
+            bench --site $SITE_NAME migrate
+            bench --site $SITE_NAME clear-cache
+            sudo supervisorctl restart frappe:
+          "
