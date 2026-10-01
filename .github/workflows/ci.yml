@@ -71,7 +71,7 @@ jobs:
 
       - name: Initialize Bench
         run: |
-          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" --frappe-branch "version-15" ~/frappe-bench
+          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" --frappe-branch "version-16" ~/frappe-bench
 
       - name: Get App
         working-directory: /home/runner/frappe-bench
