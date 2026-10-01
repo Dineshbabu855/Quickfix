@@ -1,0 +1,41 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - production
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+      - name: Deploy via SSH
+        env:
+          HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          USER: ${{ secrets.PRODUCTION_SSH_USER }}
+          PORT: ${{ secrets.PRODUCTION_SSH_PORT }}
+          BENCH_PATH: ${{ secrets.PRODUCTION_BENCH_PATH }}
+          SITE_NAME: ${{ secrets.PRODUCTION_SITE_NAME }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -p "$PORT" "$USER@$HOST" "
+            set -e
+            cd $BENCH_PATH
+            bench --site $SITE_NAME pull
+            bench --site $SITE_NAME build
+            bench --site $SITE_NAME migrate
+            bench --site $SITE_NAME clear-cache
+            sudo supervisorctl restart frappe:
+          "
