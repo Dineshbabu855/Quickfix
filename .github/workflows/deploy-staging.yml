@@ -1,0 +1,25 @@
+name: Deploy Staging
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  deploy-staging:
+    name: deploy-staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy to staging
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT }}
+          script: |
+            cd /path/to/bench
+            bench --site <site> migrate
+            bench --site <site> clear-cache
+            bench restart
