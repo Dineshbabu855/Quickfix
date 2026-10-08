@@ -1,0 +1,25 @@
+name: Deploy Production
+on:
+  push:
+    branches: [production]
+permissions:
+  contents: read
+jobs:
+  deploy-production:
+    name: deploy-production
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            cd /path/to/bench
+            bench --site <site> migrate
+            bench --site <site> clear-cache
+            bench restart
