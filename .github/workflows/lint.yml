@@ -1,0 +1,40 @@
+name: Lint
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Run ruff check
+        run: ruff check .
+      - name: Run black check
+        run: black --check .
+      - name: Setup Node
+        if: ${{ hashFiles('package-lock.json') != '' || hashFiles('yarn.lock') != '' || hashFiles('pnpm-lock.yaml') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || hashFiles('yarn.lock') != '' && 'yarn' || hashFiles('pnpm-lock.yaml') != '' && 'pnpm' || '' }}
+      - name: Install npm dependencies
+        if: ${{ hashFiles('package-lock.json') != '' || hashFiles('yarn.lock') != '' || hashFiles('pnpm-lock.yaml') != '' }}
+        run: |
+          if [ -f package-lock.json ]; then npm ci;
+          elif [ -f yarn.lock ]; then yarn install --frozen-lockfile;
+          elif [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile;
+          fi
+      - name: Run eslint
+        if: ${{ hashFiles('package-lock.json') != '' || hashFiles('yarn.lock') != '' || hashFiles('pnpm-lock.yaml') != '' }}
+        run: npx eslint .
