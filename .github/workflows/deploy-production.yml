@@ -1,0 +1,33 @@
+name: Deploy Production
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    # Production approvals: GitHub Settings > Environments > production > Required reviewers
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy to production via SSH
+        env:
+          HOST: ${{ secrets.PRODUCTION_HOST }}
+          USER: ${{ secrets.PRODUCTION_USER }}
+          SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          PORT: ${{ secrets.PRODUCTION_PORT }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key -p "$PORT" "$USER@$HOST" '
+            set -euo pipefail
+            cd /path/to/bench
+            bench update --patch
+            bench --site <site> migrate
+            bench --site <site> clear-cache
+            bench restart
+          '
